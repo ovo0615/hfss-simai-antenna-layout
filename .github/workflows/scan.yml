@@ -1,0 +1,14 @@
+name: leak scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: scan for local paths, credentials and internal addresses
+        run: bash .github/scripts/scan_secrets.sh

@@ -1,0 +1,181 @@
+{
+ "summary": {
+  "platform": "customer_iot_monopole",
+  "n_probes": 6,
+  "learnable_signal_db": 1.139,
+  "median_change_db": 0.687,
+  "clean_peak_dbi": 3.136,
+  "verdict": "灰區",
+  "minutes": 3.8,
+  "thresholds": {
+   "good": 2.0,
+   "marginal": 1.0
+  }
+ },
+ "probes": [
+  {
+   "id": "battery_deep_0",
+   "topology": "battery_deep",
+   "pattern_change_db": 0.995,
+   "peak_change_db": -0.449,
+   "peak_gain_dbi": 2.688,
+   "solve_minutes": 0.52,
+   "config": {
+    "ground_shape": "rect",
+    "freq_ghz": 2.45,
+    "metals": [
+     {
+      "name": "battery",
+      "kind": "solid",
+      "x": 15.54,
+      "y": 33.12,
+      "z": 0.0,
+      "w": 12.54,
+      "d": 12.12,
+      "h": 2.9
+     }
+    ]
+   }
+  },
+  {
+   "id": "battery_deep_1",
+   "topology": "battery_deep",
+   "pattern_change_db": 1.139,
+   "peak_change_db": -0.111,
+   "peak_gain_dbi": 3.025,
+   "solve_minutes": 0.57,
+   "config": {
+    "ground_shape": "rect",
+    "freq_ghz": 2.45,
+    "metals": [
+     {
+      "name": "battery",
+      "kind": "solid",
+      "x": 12.35,
+      "y": 36.75,
+      "z": 0.0,
+      "w": 15.77,
+      "d": 7.93,
+      "h": 8.69
+     }
+    ]
+   }
+  },
+  {
+   "id": "battery_near_0",
+   "topology": "battery_near",
+   "pattern_change_db": 0.579,
+   "peak_change_db": 0.508,
+   "peak_gain_dbi": 3.644,
+   "solve_minutes": 0.51,
+   "config": {
+    "ground_shape": "rect",
+    "freq_ghz": 2.45,
+    "metals": [
+     {
+      "name": "battery",
+      "kind": "solid",
+      "x": 11.57,
+      "y": 31.46,
+      "z": 0.0,
+      "w": 11.97,
+      "d": 11.0,
+      "h": 8.31
+     }
+    ]
+   }
+  },
+  {
+   "id": "battery_near_1",
+   "topology": "battery_near",
+   "pattern_change_db": 0.795,
+   "peak_change_db": 0.549,
+   "peak_gain_dbi": 3.685,
+   "solve_minutes": 0.57,
+   "config": {
+    "ground_shape": "rect",
+    "freq_ghz": 2.45,
+    "metals": [
+     {
+      "name": "battery",
+      "kind": "solid",
+      "x": 10.65,
+      "y": 32.38,
+      "z": 0.0,
+      "w": 21.1,
+      "d": 10.72,
+      "h": 5.31
+     }
+    ]
+   }
+  },
+  {
+   "id": "twin_near_0",
+   "topology": "twin_near",
+   "pattern_change_db": 0.496,
+   "peak_change_db": 0.246,
+   "peak_gain_dbi": 3.383,
+   "solve_minutes": 0.57,
+   "config": {
+    "ground_shape": "rect",
+    "freq_ghz": 2.45,
+    "metals": [
+     {
+      "name": "battery",
+      "kind": "solid",
+      "x": 15.35,
+      "y": 33.46,
+      "z": 0.0,
+      "w": 16.53,
+      "d": 9.36,
+      "h": 5.05
+     },
+     {
+      "name": "module",
+      "kind": "solid",
+      "x": 6.53,
+      "y": 20.48,
+      "z": 0.0,
+      "w": 25.23,
+      "d": 8.69,
+      "h": 3.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "twin_near_1",
+   "topology": "twin_near",
+   "pattern_change_db": 0.463,
+   "peak_change_db": 0.304,
+   "peak_gain_dbi": 3.44,
+   "solve_minutes": 0.44,
+   "config": {
+    "ground_shape": "rect",
+    "freq_ghz": 2.45,
+    "metals": [
+     {
+      "name": "battery",
+      "kind": "solid",
+      "x": 13.93,
+      "y": 33.65,
+      "z": 0.0,
+      "w": 11.12,
+      "d": 8.72,
+      "h": 7.23
+     },
+     {
+      "name": "module",
+      "kind": "solid",
+      "x": 35.69,
+      "y": 24.61,
+      "z": 0.0,
+      "w": 13.33,
+      "d": 13.38,
+      "h": 8.31
+     }
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/api.ts","./src/geometry.ts","./src/main.tsx","./src/components/keepoutmap.tsx","./src/components/preview3d.tsx","./src/components/reportview.tsx","./src/components/sweepchart.tsx"],"version":"5.7.2"}

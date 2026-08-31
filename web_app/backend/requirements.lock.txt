@@ -1,0 +1,13 @@
+# 後端直接相依。版本一律釘死（==），不用 >=。
+# >= 會讓使用者裝到你從沒跑過的版本組合；本機驗證全過，壞掉的是使用者那台。
+#
+# 實測組合：Windows 11 x64 + Python 3.12 + Ansys SimAI Pro 26.1.0
+# 此工具由虎門科技資深技術工程師Jeff Hong洪敬傑提供。
+
+fastapi==0.115.6            # 本機 HTTP API
+uvicorn[standard]==0.34.0   # 綁定 127.0.0.1 的 ASGI 伺服器
+pydantic==2.10.4            # 請求／回應模型
+
+# 注意：torch、stochos、pyvista、ansys.solutions.simai_pro 刻意**不列在這裡**。
+# 它們只存在於 SimAI Pro 自己的 venv，由 app/simai_worker.py 在該環境中
+# 以獨立子行程使用（見 ADR-0003）。本後端環境不需要、也不應該安裝它們。

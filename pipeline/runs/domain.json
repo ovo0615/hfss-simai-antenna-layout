@@ -1,0 +1,64 @@
+{
+ "n_samples": 160,
+ "ground_shapes": [
+  "narrow",
+  "notch",
+  "rect",
+  "shortgnd"
+ ],
+ "baseline_shapes": [
+  "narrow",
+  "notch",
+  "rect",
+  "shortgnd"
+ ],
+ "freq_ghz": [
+  2.45,
+  2.45
+ ],
+ "n_metals": [
+  0,
+  2
+ ],
+ "metal_kinds": [
+  "lbracket",
+  "slotted",
+  "solid"
+ ],
+ "metal_w": [
+  16.03,
+  68.39
+ ],
+ "metal_d": [
+  2.0,
+  19.94
+ ],
+ "metal_h": [
+  3.01,
+  25.97
+ ],
+ "metal_x": [
+  4.02,
+  79.29
+ ],
+ "metal_y": [
+  16.04,
+  71.12
+ ],
+ "metal_z": [
+  -7.78,
+  0.0
+ ],
+ "metal_top_y": [
+  26.71,
+  73.12
+ ],
+ "total_volume_mm3": [
+  0,
+  12291.17
+ ],
+ "peak_gain_dbi": [
+  -2.65,
+  4.24
+ ]
+}

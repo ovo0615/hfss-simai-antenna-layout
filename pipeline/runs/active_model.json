@@ -1,0 +1,10 @@
+{
+ "model_dir": "%APPDATA%\\Ansys\\glow\\Simai_ProSolution\\project_files\\6a92e047d7154a632855d491\\bdm\\method_2516ikvt\\model_1",
+ "model_name": "surface",
+ "output_field": "gain_residual",
+ "input_fields": "region",
+ "baseline": "pipeline\\runs\\baseline.json",
+ "baseline_sha": "f31cbe1f96e61a8e",
+ "holdout": "battery_deep",
+ "trained_from": "6a92e047d7154a632855d491"
+}

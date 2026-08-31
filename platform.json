@@ -1,0 +1,65 @@
+{
+  "_comment": [
+    "平台定義的唯一真實來源。此工具由虎門科技資深技術工程師Jeff Hong洪敬傑提供。",
+    "後端（app/platform_model.py）、HFSS 建模（pipeline/solve_dataset.py）、",
+    "訓練網格（app/vtp_builder.py）與前端預覽（透過 /api/platform）都讀這一份。",
+    "換一支天線 = 改這個檔案，不是改四處程式碼。",
+    "單位一律 mm；接地板位於 z=0 平面，原點在接地板左下角。"
+  ],
+
+  "name": "平面 IFA 2.45 GHz ｜ 100×60 mm 接地板",
+  "freq_ghz": 2.45,
+
+  "ground": { "w": 100.0, "h": 60.0 },
+
+  "antenna": {
+    "type": "traces",
+    "_note": "type=traces 用矩形片描述；客戶的天線改用 type=imported 指向匯出的 STL",
+    "traces": [
+      { "name": "arm",   "x": 44.0, "y": 64.0, "w": 30.0, "h": 2.0 },
+      { "name": "short", "x": 44.0, "y": 60.0, "w": 2.0,  "h": 6.0 },
+      { "name": "feed",  "x": 50.0, "y": 61.0, "w": 2.0,  "h": 5.0 }
+    ],
+    "united_with_ground": ["arm", "short"],
+    "perfecte": ["gnd", "feed"],
+    "port": {
+      "x": 50.0, "y": 60.0, "w": 2.0, "h": 1.0,
+      "integration_line": [[51.0, 60.0, 0.0], [51.0, 61.0, 0.0]],
+      "impedance": 50.0
+    }
+  },
+
+  "ground_shapes": {
+    "_note": "天線的短路臂接在板子上緣，所有外型的上緣都必須維持該 y，否則天線斷路",
+    "rect":     { "outer": [0.0, 0.0, 100.0, 60.0], "cut": null,
+                  "label": "矩形（基準）" },
+    "shortgnd": { "outer": [0.0, 14.0, 100.0, 60.0], "cut": null,
+                  "label": "短接地面 100×46" },
+    "narrow":   { "outer": [10.0, 0.0, 90.0, 60.0], "cut": null,
+                  "label": "窄板 80×60" },
+    "notch":    { "outer": [0.0, 0.0, 100.0, 60.0], "cut": [6.0, 34.0, 34.0, 60.0],
+                  "label": "左上開孔" }
+  },
+
+  "metal_kinds": {
+    "_note": "每個種類拆成幾個長方體。分量之間**不可互相穿插**，否則 HFSS 求解直接失敗。比例相對於該金屬件的 w/d/h。",
+    "solid":    [[0.0, 0.0, 0.0, 1.0, 1.0, 1.0]],
+    "slotted":  [[0.0, 0.0, 0.0, 0.42, 1.0, 1.0],
+                 [0.58, 0.0, 0.0, 0.42, 1.0, 1.0]],
+    "lbracket": [[0.0, 0.0, 0.0, 1.0, 1.0, 0.30],
+                 [0.0, 0.0, 0.30, 1.0, 0.30, 0.70]]
+  },
+
+  "farfield": {
+    "_note": "角度網格必須與 HFSS 的遠場取樣一致；節點順序為 (phi 外層, theta 內層)",
+    "radius": 80.0,
+    "theta_step": 10,
+    "phi_step": 10
+  },
+
+  "mesh": {
+    "_note": "平台節點不要淹沒遠場球節點（輸出真正有意義的地方）",
+    "plate_div": 14,
+    "box_div": 6
+  }
+}

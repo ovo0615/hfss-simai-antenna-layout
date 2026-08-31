@@ -1,0 +1,57 @@
+# 天線佈局 AI 預測工具（HFSS × SimAI）
+# 此工具由虎門科技資深技術工程師Jeff Hong洪敬傑提供。
+
+# ── 環境與相依（絕對不進版本庫）─────────────────────────────
+web_app/backend/.venv/
+web_app/frontend/node_modules/
+__pycache__/
+*.pyc
+.uv/
+
+# ★ web_app/frontend/dist 是**刻意追蹤**的。
+# 使用者用「Code → Download ZIP」拿到的原始碼壓縮檔**不含被忽略的建置產物**，
+# 少了 dist 就得自己裝 Node.js 才能啟動——那違反「使用者不需要 Node」的前提。
+
+# ── AEDT 專案與求解結果（二進位、可重建、且是廠商格式）──────
+# 這些全部可以用 pipeline/solve_dataset.py 重新產生。
+pipeline/dataset/
+pipeline/stage0/
+*.aedt
+*.aedt.lock
+*.aedt.temp
+*.aedtresults/
+*.pyaedt/
+*.lock
+
+# ── 大型訓練資料（可由 build_dataset.py 重建）───────────────
+# 保留 runs/ 下的結果 JSON（validation / scenarios / baseline / domain），
+# 那些只有幾百 KB，卻是「驗證報告」分頁能顯示東西的前提。
+pipeline/runs/**/dataset/
+pipeline/runs/**/raw/
+pipeline/runs/**/meta/
+pipeline/runs/dataset/
+pipeline/runs/raw/
+pipeline/runs/meta/
+pipeline/runs/export_probe/
+
+# ── 還原出來的模型（約 85 MB）─────────────────────────────
+# model_bundle.py unpack 會把模型解到這裡。它超過 GitHub 單檔上限，
+# 也不該進版本控制——模型走 GitHub Releases 發佈。
+pipeline/runs/model/
+pipeline/runs/**/model/
+model_*.zip
+
+# ── 推論時的暫存網格 ──────────────────────────────────────
+# worker 每次請求會把即時產生的幾何寫成 VTP 再送進模型。
+# 那是執行期產物，不是原始碼。
+web_app/backend/runs/scratch/
+
+# ── 日誌（含本機路徑與使用者名稱）────────────────────────────
+*.log
+logs/
+pipeline/batch.log
+
+# ── 其他 ────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp

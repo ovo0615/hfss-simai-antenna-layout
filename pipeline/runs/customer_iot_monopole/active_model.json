@@ -1,0 +1,11 @@
+{
+ "model_dir": "pipeline/runs/customer_iot_monopole/model",
+ "model_name": "surface",
+ "output_field": "gain_residual",
+ "input_fields": "region",
+ "baseline": "pipeline/runs/customer_iot_monopole/baseline.json",
+ "baseline_sha": "820f336696343b33",
+ "holdout": "battery_deep",
+ "trained_from": "6a925fc2d7154a632855d48e",
+ "restored_from": "model_customer.zip"
+}

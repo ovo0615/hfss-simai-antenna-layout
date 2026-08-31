@@ -1,0 +1,22 @@
+{
+ "project_id": "6a92e047d7154a632855d491",
+ "api": "http://127.0.0.1:53093",
+ "holdout": "battery_deep",
+ "model_user_name": "antenna_battery_deep",
+ "model_fname": "surface",
+ "input_names": [
+  "region"
+ ],
+ "output_names": [
+  "gain_residual"
+ ],
+ "boundary_conditions": [
+  "freq_ghz",
+  "n_metals",
+  "metal_volume_mm3"
+ ],
+ "n_train": 131,
+ "n_test": 29,
+ "build_duration": 1440.0,
+ "train_minutes": 61.85
+}
