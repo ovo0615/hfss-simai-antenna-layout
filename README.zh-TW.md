@@ -95,7 +95,7 @@
 - 只訓練 **2.45 GHz 單頻**；一個模型對應一支天線。
 - 深零點的絕對值較不準。
 - **本版本庫不含訓練好的模型**（約 85 MB，超過 GitHub 單檔上限）。
-  到 [Releases](../../releases/latest) 下載（尚未上架），或自己跑一次訓練流程。
+  到 [Releases](../../releases/latest) 下載，或自己跑一次訓練流程。
 
 ---
 
@@ -171,8 +171,7 @@ python pipeline/screen_platform.py 2 0
 ## 把模型交給別人
 
 訓練好的模型約 85 MB，**不在版本庫裡**（超過 GitHub 單檔上限）。
-兩個平台的模型放在 **[Releases](../../releases/latest)**（尚未上架，
-需要請來信索取，或自己跑一次訓練流程）：
+兩個平台的模型都放在 **[Releases](../../releases/latest)**：
 
 ```bash
 gh release download v0.1.0 --pattern "model_platform.zip"

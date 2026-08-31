@@ -98,8 +98,8 @@ holding out `battery_near` instead gives a 0.26 dB peak error on the same datase
 - Trained at **2.45 GHz only**; one model corresponds to one antenna.
 - Absolute values in deep nulls are less accurate.
 - **This repository does not contain a trained model** (~85 MB, above GitHub's per-file
-  limit). Download one from [Releases](../../releases/latest) (not yet uploaded
-  here), or run the training pipeline yourself.
+  limit). Download one from [Releases](../../releases/latest), or run the training
+  pipeline yourself.
 
 ---
 
@@ -179,8 +179,7 @@ thresholds are back-derived from two completed platforms, not guessed.
 ## Handing the model to someone else
 
 The trained model is ~85 MB and **not in the repository** (above GitHub's per-file limit).
-Both platforms' models are published in **[Releases](../../releases/latest)** (not yet
-uploaded here — ask, or run the training pipeline yourself):
+Both platforms' models ship in **[Releases](../../releases/latest)**:
 
 ```bash
 gh release download v0.1.0 --pattern "model_platform.zip"
