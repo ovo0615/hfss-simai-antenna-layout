@@ -51,6 +51,18 @@ def test_sweep_and_keepout_refuse_while_loading(slow_client):
         assert r.status_code == 503
 
 
+def test_sweep_after_worker_crash_returns_503_not_all_invalid(slow_client):
+    slow_client.start()
+    slow_client._proc.kill()
+    slow_client._proc.wait()
+    http = TestClient(main.app)                  # 不跑 startup，避免另起載入
+    body = {"config": {"metals": [{"name": "m", "x": 1, "y": 1, "w": 5, "d": 5, "h": 1}]},
+            "metal_name": "m", "start": 0, "stop": 1}
+    r = http.post("/api/sweep", json=body)
+    assert r.status_code == 503
+    assert "重新載入" in r.json()["detail"]
+
+
 def test_restart_returns_immediately(slow_client):
     slow_client.start()
     assert slow_client.state == "ready"

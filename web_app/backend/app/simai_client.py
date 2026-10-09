@@ -154,6 +154,7 @@ class SimAIClient:
     def start(self) -> None:
         """同步載入：回來時 state 一定是 ready 或 failed。"""
         with self._state_lock:
+            self._gen += 1                      # 排隊中的背景載入作廢，不要連載兩次
             self._set_loading()
             gen = self._gen
         with self._lock:
@@ -189,7 +190,8 @@ class SimAIClient:
     def _start_locked(self, gen: int) -> None:
         self._kill(self._proc)                  # 保險：不留舊 worker
         self._proc = self._lines = None
-        self._set_loading()
+        if self.state != "loading":             # 已經在計時就不歸零：排隊等鎖也算載入時間
+            self._set_loading()
 
         if not Path(self.python).is_file():
             self._fail("找不到 SimAI 的 python：%s\n"
@@ -252,8 +254,9 @@ class SimAIClient:
         if line == "":
             self._kill(proc)
             self._fail("模型載入超過 %d 秒仍未完成，已結束 worker。"
-                       "新電腦第一次載入較慢時，可設環境變數 SIMAI_LOAD_TIMEOUT（秒）"
-                       "調大上限後按「重新載入模型」。%s"
+                       "新電腦第一次載入較慢時，關掉主控台後以 "
+                       "start.bat -ModelLoadTimeoutSec 1800 重開（環境變數 SIMAI_LOAD_TIMEOUT "
+                       "只在服務啟動時讀取）。%s"
                        % (self.load_timeout, self._stderr_tail()), auto_restart=False)
             return
         if line is None:
@@ -277,7 +280,8 @@ class SimAIClient:
             self._auto_restart = True
         else:
             # worker 活著但模型沒載入（例如尚未設定模型）：留著它，原因照實顯示
-            self._fail(msg.get("reason", "") or "模型未就緒", auto_restart=False)
+            self._fail((msg.get("reason", "") or "模型未就緒") + self._stderr_tail(),
+                       auto_restart=False)
 
     def stop(self) -> None:
         with self._state_lock:
