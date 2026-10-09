@@ -11,6 +11,10 @@ param(
     [string]$SimAIModelDir = "",
     [string]$SimAIModelName = "surface",
     [string]$SimAIOutputField = "gain",
+    # 等「網頁服務」起來的上限。模型載入不算在內（背景載入，見下方）。
+    [int]$StartupTimeoutSec = 120,
+    # 模型載入上限（秒）；0 = 用後端預設 900 秒。新電腦第一次載入特別慢時才需要調。
+    [int]$ModelLoadTimeoutSec = 0,
     [switch]$NoBrowser
 )
 
@@ -59,6 +63,24 @@ $dist = Join-Path $root "frontend\dist"
 
 function Test-PortInUse([int]$p) {
     [bool](Get-NetTCPConnection -LocalPort $p -State Listen -ErrorAction SilentlyContinue)
+}
+
+function Get-ModelStatus([string]$url) {
+    try {
+        $r = Invoke-WebRequest -Uri "$url/api/health" -UseBasicParsing -TimeoutSec 3
+        # PS 5.1 的 .Content 會把沒帶 charset 的 JSON 當 ISO-8859-1 解，中文變亂碼
+        $text = [System.Text.Encoding]::UTF8.GetString($r.RawContentStream.ToArray())
+        return ($text | ConvertFrom-Json).simai
+    }
+    catch { return $null }
+}
+
+function Assert-Step([string]$what) {
+    if ($LASTEXITCODE -ne 0) {
+        Write-Msg "$what 失敗（結束碼 $LASTEXITCODE）。請檢查網路或 Proxy 後重新執行 start.bat。" Red
+        Write-Msg "若一再失敗，刪除 backend\.venv 資料夾後再執行一次。" Yellow
+        exit 1
+    }
 }
 
 Write-Msg "=== 天線佈局 AI 預測工具 ===" Cyan
@@ -118,37 +140,65 @@ if (Test-PortInUse $Port) {
 }
 
 # 環境（uv 三層策略：全域 uv → 裝進 venv 的 uv → 純 pip）
-if (-not (Test-Path $venvPy)) {
-    Write-Msg "首次啟動，建立執行環境（約一分鐘）..." Yellow
-    $uv = Get-Command uv -ErrorAction SilentlyContinue
-    if ($uv) {
-        & uv venv (Join-Path $backend ".venv")
-        & uv pip install --python $venvPy -r (Join-Path $backend "requirements.lock.txt")
+# ★ 「裝好了沒」看 .install_ok，不看 python.exe 在不在。
+# 第一次安裝被中斷（網路、Proxy）會留下有 python.exe、缺套件的半套 venv；
+# 只看 python.exe 的話之後每次都跳過安裝，症狀變成 uvicorn 起不來，
+# 完全看不出是安裝的問題。標記檔記下鎖檔雜湊，鎖檔改了也會重裝。
+$lockFile = Join-Path $backend "requirements.lock.txt"
+$installMark = Join-Path $backend ".venv\.install_ok"
+$lockHash = (Get-FileHash $lockFile -Algorithm SHA256).Hash
+$installed = $false
+if ((Test-Path $venvPy) -and (Test-Path $installMark)) {
+    $installed = ((Get-Content $installMark -Raw).Trim() -eq $lockHash)
+}
+if (-not $installed) {
+    if (Test-Path $venvPy) {
+        Write-Msg "執行環境不完整或相依套件有更新，重新安裝套件..." Yellow
     }
     else {
-        $py = $null
-        # ★ 只列**實際跑過整套流程**的版本。清單決定使用者拿到哪個直譯器；
-        # 列一個沒驗證過的版本，等於讓使用者第一次執行就踩到你沒測過的路徑。
-        foreach ($v in @("3.12")) {
-            try {
-                & py "-$v-64" -c "exit()" 2>$null
-                if ($LASTEXITCODE -eq 0) { $py = "py -$v-64"; break }
-            }
-            catch { }   # py.exe 找不到版本時寫 stderr，會被包成終止例外，必須吞掉
+        Write-Msg "首次啟動，建立執行環境（約一分鐘）..." Yellow
+    }
+    $uv = Get-Command uv -ErrorAction SilentlyContinue
+    if ($uv) {
+        if (-not (Test-Path $venvPy)) {
+            & uv venv (Join-Path $backend ".venv")
+            Assert-Step "建立執行環境（uv venv）"
         }
-        if (-not $py) { $py = "python" }
-        & cmd /c "$py -m venv `"$(Join-Path $backend '.venv')`""
+        & uv pip install --python $venvPy -r $lockFile
+        Assert-Step "安裝套件（uv pip install）"
+    }
+    else {
+        if (-not (Test-Path $venvPy)) {
+            $py = $null
+            # ★ 只列**實際跑過整套流程**的版本。清單決定使用者拿到哪個直譯器；
+            # 列一個沒驗證過的版本，等於讓使用者第一次執行就踩到你沒測過的路徑。
+            foreach ($v in @("3.12")) {
+                try {
+                    & py "-$v-64" -c "exit()" 2>$null
+                    if ($LASTEXITCODE -eq 0) { $py = "py -$v-64"; break }
+                }
+                catch { }   # py.exe 找不到版本時寫 stderr，會被包成終止例外，必須吞掉
+            }
+            if (-not $py) { $py = "python" }
+            & cmd /c "$py -m venv `"$(Join-Path $backend '.venv')`""
+            Assert-Step "建立執行環境（$py -m venv）"
+        }
         & $venvPy -m pip install --upgrade pip uv
+        Assert-Step "安裝 pip 與 uv"
         $venvUv = Join-Path $backend ".venv\Scripts\uv.exe"
         if (Test-Path $venvUv) {
-            & $venvUv pip install --python $venvPy -r (Join-Path $backend "requirements.lock.txt")
+            & $venvUv pip install --python $venvPy -r $lockFile
         }
         else {
-            & $venvPy -m pip install -r (Join-Path $backend "requirements.lock.txt")
+            & $venvPy -m pip install -r $lockFile
         }
+        Assert-Step "安裝套件"
     }
+    Set-Content -Path $installMark -Value $lockHash -Encoding ASCII
+    Write-Msg "執行環境安裝完成。" Green
 }
 
+if ($ModelLoadTimeoutSec -gt 0) { $env:SIMAI_LOAD_TIMEOUT = "$ModelLoadTimeoutSec" }
 if ($SimAIModelDir) { $env:SIMAI_MODEL_DIR = $SimAIModelDir }
 $env:SIMAI_MODEL_NAME = $SimAIModelName
 $env:SIMAI_OUTPUT_FIELD = $SimAIOutputField
@@ -162,24 +212,35 @@ try {
     $server = Start-Process -FilePath $venvPy `
         -ArgumentList @("-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "$Port") `
         -WorkingDirectory $backend -NoNewWindow -PassThru
+    $null = $server.Handle   # 先拿 handle，程序結束後 ExitCode 才讀得到
 
+    # ★ 只等「HTTP 起來」，不等模型載好——模型在後端背景載入，進度下面另外報。
+    # 用時間截止，不用圈數：埠還沒開時每次健康檢查會卡滿 2 秒逾時
+    # （Windows 對 localhost 的拒絕連線會重試），圈數換算成秒數隨機器而變。
     $ready = $false
-    for ($i = 0; $i -lt 180; $i++) {
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    while ($sw.Elapsed.TotalSeconds -lt $StartupTimeoutSec) {
         if ($server.HasExited) { break }
         Start-Sleep -Milliseconds 500
         try {
             $h = Invoke-WebRequest -Uri "$appUrl/api/health" -UseBasicParsing -TimeoutSec 2
             if ($h.StatusCode -eq 200) { $ready = $true; break }
         }
-        catch { $ready = $false }
+        catch { }
     }
 
     if (-not $ready) {
-        Write-Msg "服務未能在時限內就緒。" Red
+        if ($server.HasExited) {
+            Write-Msg "後端程序已結束（結束碼 $($server.ExitCode)），原因見上方訊息。" Red
+            Write-Msg "若是 ModuleNotFoundError，刪除 backend\.venv\.install_ok 後重新執行，會重裝套件。" Yellow
+        }
+        else {
+            Write-Msg "網頁服務在 $StartupTimeoutSec 秒內沒有回應。可加參數 -StartupTimeoutSec 調大上限。" Red
+        }
         exit 1
     }
 
-    Write-Msg "服務就緒：$appUrl" Green
+    Write-Msg "服務就緒：$appUrl（模型在背景載入，網頁上會顯示進度）" Green
     if (-not $NoBrowser) {
         try { Start-Process $appUrl }
         catch {
@@ -187,7 +248,28 @@ try {
         }
     }
     Write-Msg "按 Ctrl+C 結束服務。" Cyan
-    while (-not $server.HasExited) { Start-Sleep -Seconds 1 }
+
+    # 主控台每 10 秒報一次模型載入進度，直到就緒或失敗
+    $modelState = "loading"
+    $nextCheck = 0
+    while (-not $server.HasExited) {
+        Start-Sleep -Seconds 1
+        if ($modelState -ne "loading" -or $sw.Elapsed.TotalSeconds -lt $nextCheck) { continue }
+        $nextCheck = $sw.Elapsed.TotalSeconds + 10
+        $st = Get-ModelStatus $appUrl
+        if ($null -eq $st) { continue }
+        $modelState = $st.state
+        if ($st.state -eq "loading") {
+            Write-Msg "模型載入中…已 $([int]$st.loading_seconds) 秒（上限 $([int]$st.load_timeout) 秒）" DarkGray
+        }
+        elseif ($st.state -eq "ready") {
+            Write-Msg "模型就緒（載入 $($st.load_seconds) 秒），可以開始操作。" Green
+        }
+        else {
+            Write-Msg "模型未就緒：$($st.reason)" Red
+            Write-Msg "修正後在網頁上按「重新載入模型」即可，不必重開。" Yellow
+        }
+    }
 }
 finally {
     if ($null -ne $server) {

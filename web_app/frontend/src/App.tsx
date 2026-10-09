@@ -33,8 +33,15 @@ const BASELINE_GAIN_DBI = 3.44;
 
 function StatusLine({ status }: { status: SimAIStatus | null }) {
   if (!status) return <span className="hint">連線中…</span>;
-  const color = status.ready ? "var(--good)" : status.alive ? "var(--warn)" : "var(--bad)";
-  const label = status.ready ? "模型已載入，推論就緒" : status.alive ? "worker 在但模型未就緒" : "worker 未啟動";
+  const loading = status.state === "loading";
+  const color = status.ready ? "var(--good)" : loading || status.alive ? "var(--warn)" : "var(--bad)";
+  const label = status.ready
+    ? "模型已載入，推論就緒"
+    : loading
+      ? `模型載入中…已 ${Math.round(status.loading_seconds)} 秒`
+      : status.alive
+        ? "worker 在但模型未就緒"
+        : "worker 未啟動";
   return (
     <div>
       <div style={{ fontSize: 13 }}>
@@ -79,6 +86,7 @@ export default function App() {
   const [koBusy, setKoBusy] = useState(false);
   const [report, setReport] = useState<ReportData | null>(null);
   const [reportError, setReportError] = useState<string | null>(null);
+  const [pendingBase, setPendingBase] = useState<PlatformConfig | null>(null);
 
   // 拖動基準：拖動期間以起始位置 + 位移計算，避免累積誤差
   const dragBaseRef = useRef<Map<string, { x: number; y: number }>>(new Map());
@@ -107,21 +115,42 @@ export default function App() {
         // 看起來像壞掉。
         const base = s.scenarios.find((x) => x.in_training) ?? s.scenarios[0];
         if (base) {
-          setCfg({
+          const baseCfg: PlatformConfig = {
             ground_shape: base.config.ground_shape,
             freq_ghz: base.config.freq_ghz,
             metals: base.config.metals,
-          });
+          };
+          setCfg(baseCfg);
           setActiveScenario(base.key);
-          runPredictRef.current?.({
-            ground_shape: base.config.ground_shape,
-            freq_ghz: base.config.freq_ghz,
-            metals: base.config.metals,
-          });
+          // 模型可能還在背景載入：等 status 變成 ready 再跑（見下面的 effect）
+          setPendingBase(baseCfg);
         }
       })
       .catch(() => undefined);
   }, []);
+
+  // 載入中每 2 秒問一次，直到 ready 或 failed。
+  // 後端改成背景載入之後，只在開啟時抓一次 health 會讓畫面永遠停在「載入中」。
+  const loading = status?.state === "loading";
+  useEffect(() => {
+    if (!loading) return;
+    const timer = window.setInterval(() => {
+      getHealth()
+        .then((h) => {
+          setStatus(h.simai);
+          setCalib(h.uncertainty_calibration ?? null);
+        })
+        .catch(() => undefined);
+    }, 2000);
+    return () => window.clearInterval(timer);
+  }, [loading]);
+
+  // 開場的基準預測：劇本與模型都到齊才跑，只跑一次
+  useEffect(() => {
+    if (!status?.ready || !pendingBase) return;
+    runPredictRef.current?.(pendingBase);
+    setPendingBase(null);
+  }, [status?.ready, pendingBase]);
 
   useEffect(() => {
     if (view !== "report" || report) return;

@@ -1,0 +1,5 @@
+# 只給維護者跑測試用；start.bat 不會裝這些。
+# 此工具由虎門科技資深技術工程師Jeff Hong洪敬傑提供。
+-r requirements.lock.txt
+pytest==8.3.4
+httpx==0.28.1               # fastapi.testclient 需要

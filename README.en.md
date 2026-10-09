@@ -129,9 +129,12 @@ Double-click:
 web_app\start.bat
 ```
 
-First launch builds the Python environment (about a minute); later launches take ~15 s to
-load the model. The browser opens automatically. If the port is taken, the launcher shifts
-to the next free one and prints which port it landed on.
+First launch builds the Python environment (about a minute). The web page opens within
+seconds while the model loads in the background; both the page and the console show
+"loading… N s". Loading takes 26–37 s on the test machine but **can take several minutes
+the first time on a new PC** (antivirus scans thousands of torch files). The limit is
+900 s; change it with `-ModelLoadTimeoutSec`. The browser opens automatically. If the port
+is taken, the launcher shifts to the next free one and prints which port it landed on.
 
 - If it detects this same tool already running, it **reuses the existing backend**
   instead of starting a second copy

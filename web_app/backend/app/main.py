@@ -371,6 +371,7 @@ def keepout(req: KeepoutIn) -> dict:
       degraded —— 增益掉超過門檻，能放但要付代價
       invalid  —— 蓋到天線導體，或超出模型的訓練範圍（**不是預測值，是不予預測**）
     """
+    _refuse_while_loading()
     base = PlatformConfig.from_dict(req.config.model_dump())
     metal = next((m for m in base.metals if m.name == req.metal_name), None)
     if metal is None:
@@ -445,6 +446,7 @@ def sweep(req: SweepIn) -> dict:
     所以實務上沒有人會為了「往下移 3 mm 能拿回多少」去跑一次掃描——
     大家只能猜。0.2 秒的推論把這個問題從「不值得問」變成「隨手就問」。
     """
+    _refuse_while_loading()
     base = PlatformConfig.from_dict(req.config.model_dump())
     if not any(m.name == req.metal_name for m in base.metals):
         raise HTTPException(status_code=400, detail="找不到金屬件：%s" % req.metal_name)
@@ -491,17 +493,27 @@ def sweep(req: SweepIn) -> dict:
     }
 
 
+def _refuse_while_loading() -> None:
+    """掃描要連打幾百次推論。載入中每一格都會失敗，與其回一張全是
+    「不予預測」的圖，不如直接說還在載入。"""
+    if client.state == "loading":
+        raise HTTPException(status_code=503, detail=client.status()["reason"])
+
+
 @app.post("/api/worker/restart")
 def restart_worker() -> dict:
+    # 背景載入：這個請求立即返回，前端看 state 輪詢
     client.stop()
-    client.start()
+    client.start_async()
     return client.status()
 
 
 @app.on_event("startup")
 def _startup() -> None:
-    # 啟動時就把模型載進來。之後每次互動才會是毫秒級。
-    client.start()
+    # 啟動時就開始載入模型，之後每次互動才會是毫秒級。
+    # ★ 必須是背景載入：uvicorn 要等 startup 跑完才綁埠，同步載入的話
+    # 模型載多久，連 /api/health 都連不上多久，啟動器只能乾等到逾時。
+    client.start_async()
 
 
 @app.on_event("shutdown")
