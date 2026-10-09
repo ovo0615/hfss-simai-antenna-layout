@@ -96,7 +96,7 @@ def test_first_line_not_json(make_client):
 
 def test_missing_python_fails_fast(make_client, monkeypatch):
     c = make_client()
-    c.python = "Z:/no/such/python.exe"
+    c.python = "no_such_dir/python.exe"
     c.start()
     assert c.state == "failed" and "找不到 SimAI 的 python" in c.reason
 
