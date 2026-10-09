@@ -274,7 +274,12 @@ try {
 finally {
     if ($null -ne $server) {
         try {
-            if (-not $server.HasExited) { & taskkill /PID $server.Id /T /F | Out-Null }
+            # Ctrl+C 也會送到 uvicorn，它自己收尾（含結束 worker）實測 1～8 秒；後端 stop() 最多等 worker 5 秒＋鎖 3 秒。
+            # 先等它；直接 taskkill 會撞上正在結束的程序，印出兩行紅字「無法終止」嚇到使用者。
+            if (-not $server.HasExited) { $null = $server.WaitForExit(15000) }
+            # 經 cmd 轉一手：PS 5.1 在 ErrorActionPreference=Stop 下，原生程式的 stderr
+            # 用 2>$null 導掉反而會變成終止例外
+            if (-not $server.HasExited) { & cmd /c "taskkill /PID $($server.Id) /T /F >nul 2>&1" }
         }
         catch { Write-Msg "taskkill 未能收掉程序樹" Yellow }
     }
