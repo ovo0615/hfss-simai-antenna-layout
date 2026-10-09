@@ -2,9 +2,13 @@
 import type { PlatformConfig, PlatformSpec } from "./geometry";
 
 export interface SimAIStatus {
+  /** 後端啟動時在背景載入模型；loading 期間要輪詢 /api/health */
+  state: "idle" | "loading" | "ready" | "failed" | "stopped";
   alive: boolean;
   ready: boolean;
   reason: string;
+  loading_seconds: number;
+  load_timeout: number;
   python: string;
   model_dir: string;
   model_name: string;

@@ -94,6 +94,20 @@ python pipeline/train_model.py http://127.0.0.1:<API埠> battery_near
 | `SIMAI_MODEL_NAME` | `surface` | 模型檔名（不含 `.pi`），是訓練時的 `fname` 而非顯示名稱 |
 | `SIMAI_OUTPUT_FIELD` | `gain` | 要預測的節點場名稱 |
 | `SIMAI_PYTHON` | SimAI Pro 預設安裝路徑 | SimAI 的 `.venv\Scripts\python.exe` |
+| `SIMAI_LOAD_TIMEOUT` | `900` | 模型載入上限（秒）；`-ModelLoadTimeoutSec` 會轉成它。超過就結束 worker 並顯示原因 |
+| `SIMAI_PREDICT_TIMEOUT` | `120` | 單次推論上限（秒）。超過就結束 worker，下一次推論自動重新載入 |
+
+`start.ps1` 另有 `-StartupTimeoutSec`（預設 120）：只等網頁服務起來，不含模型載入。
+模型在背景載入，`/api/health` 的 `simai.state` 依序是 `loading` → `ready`／`failed`；
+worker 的 stderr 寫在 `backend\runs\worker_stderr.log`（每次載入覆寫）。
+
+測試（不需要 SimAI，用假 worker）：
+
+```
+cd web_app\backend
+uv pip install --python .venv\Scripts\python.exe -r requirements-dev.txt
+.venv\Scripts\python.exe -m pytest tests -q
+```
 
 ## 架構
 
@@ -105,7 +119,7 @@ FastAPI (backend/.venv, 只有 fastapi/uvicorn)
    │  stdin/stdout JSON 逐行
    ▼
 常駐推論 worker (SimAI Pro 的 .venv python)
-   │  啟動時 GraphModel.load_model() 一次（約 15 秒）
+   │  啟動時背景 GraphModel.load_model() 一次（約 26～37 秒）
    ▼  之後每次推論 0.08 秒
 SimAI 模型 (.pi)
 ```
