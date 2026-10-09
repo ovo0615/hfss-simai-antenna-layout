@@ -37,7 +37,7 @@ from app.platform_model import (
     antenna_bbox,
     clearance_intrusion,
 )
-from app.simai_client import WorkerDead, client
+from app.simai_client import WorkerDead, WorkerLoading, client
 
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
 DIST_DIR = BACKEND_ROOT.parent / "frontend" / "dist"
@@ -408,6 +408,8 @@ def keepout(req: KeepoutIn) -> dict:
                 cells.append({"ix": ix, "iy": iy, "x": round(x, 2), "y": round(y, 2),
                               "peak_gain_dbi": round(r["peak"], 3), "state": "ok",
                               "clearance_mm": round(gap, 2)})
+            except WorkerLoading as exc:
+                raise HTTPException(status_code=503, detail=str(exc))
             except Exception as exc:
                 cells.append({"ix": ix, "iy": iy, "x": round(x, 2), "y": round(y, 2),
                               "peak_gain_dbi": None, "state": "invalid",
@@ -473,6 +475,8 @@ def sweep(req: SweepIn) -> dict:
                 # 蓋到天線上或超出訓練範圍的點要標出來，不能混在曲線裡當真
                 "valid": gap >= 0 and not warn,
             })
+        except WorkerLoading as exc:
+            raise HTTPException(status_code=503, detail=str(exc))
         except Exception:
             points.append({"value": round(v, 2), "peak_gain_dbi": None,
                            "clearance_mm": None, "valid": False})
